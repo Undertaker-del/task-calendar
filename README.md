@@ -2,6 +2,12 @@
 
 松尾研課題・大学課題・テスト・インターン等の予定を管理する自作カレンダー（依存ゼロの単一HTML / PWA）。
 
+## 公開URL
+- 本番（Vercel・常設）: https://task-calendar-calendar6.vercel.app/
+- 予備（GitHub Pages）: https://undertaker-del.github.io/task-calendar/
+
+`main` への push で Vercel が自動デプロイします。
+
 ## 特徴
 - 月表示 / リスト表示、カテゴリ色分け、締切カウントダウン
 - ライト・ダーク切替
