@@ -321,18 +321,18 @@
         <!-- setup (shown when not configured) -->
         <div id="syncSetup" style="display:flex;flex-direction:column;gap:10px">
           <div class="sync-field">
-            <label>GitHubトークン（fine-grained / Gist権限のみ推奨）</label>
+            <label>GitHubトークン（<b>PCなど編集する端末のみ</b>・スマホ閲覧だけなら不要）</label>
             <input type="password" id="syncToken" placeholder="github_pat_... または ghp_..." autocomplete="off">
           </div>
           <div class="sync-field">
-            <label>Gist ID（空欄なら新規作成。2台目以降は1台目のIDを入力）</label>
+            <label>Gist ID（空欄=新規作成。2台目以降・閲覧端末は1台目のIDを入力）</label>
             <input type="text" id="syncGistId" placeholder="例: 1a2b3c...（任意）" autocomplete="off">
           </div>
           <button class="btn primary" id="syncConnect" style="justify-content:center">接続してセットアップ</button>
           <div class="sync-note">
-            トークンはこの端末のブラウザ内にのみ保存され、外部に送信されません（GitHub APIのみ）。<br>
-            作り方: GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> →
-            Account permissions の <b>Gists = Read and write</b> だけ許可して発行。
+            <b>PC（編集）</b>: トークンを入力しGist IDは空欄→「接続」。作成後『📱スマホ用リンク』が出ます。<br>
+            <b>スマホ（閲覧）</b>: PCで出た<b>スマホ用リンクを開くだけ</b>（トークン不要で自動反映）。<br>
+            トークンはこの端末のブラウザ内にのみ保存されます。作り方: GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → <b>Gists = Read and write</b> のみ許可。
           </div>
         </div>
 
@@ -343,6 +343,10 @@
             <button class="btn" id="syncPush">⬆ 送信</button>
           </div>
           <label class="check" style="font-size:13px"><input type="checkbox" id="syncAuto"> 自動同期（開いた時に取得・変更時に送信）</label>
+          <div class="sync-actions" id="syncShareRow">
+            <button class="btn" id="syncShareView">📱 スマホ用リンク（閲覧）</button>
+            <button class="btn" id="syncShareEdit">✏️ 編集可リンク</button>
+          </div>
           <div class="sync-actions">
             <button class="btn" id="syncCopyId">Gist IDをコピー</button>
             <button class="btn danger" id="syncDisconnect" style="flex:0 0 auto">切断</button>
@@ -804,17 +808,25 @@ document.querySelectorAll(".overlay").forEach(o=> o.onclick = e=>{ if(e.target==
 let autoPushTimer = null;
 let syncing = false;
 function syncCfg(){ return { token: localStorage.getItem(LS_TOKEN)||"", gistId: localStorage.getItem(LS_GIST)||"", auto: localStorage.getItem(LS_AUTO)!=="0" }; }
-function isConfigured(){ const c=syncCfg(); return !!(c.token && c.gistId); }
+function hasGist(){ return !!syncCfg().gistId; }
+function canWrite(){ const c=syncCfg(); return !!(c.token && c.gistId); }   // 書き込み(PC)モード
+function isConfigured(){ return hasGist(); }                                // 何らか同期中(閲覧含む)
 
 async function gh(method, path, body){
   const c = syncCfg();
+  const headers = { "Accept":"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28" };
+  if(c.token) headers["Authorization"] = "Bearer "+c.token;                 // トークン無し=未認証GET(閲覧モード)
   const res = await fetch("https://api.github.com"+path, {
-    method,
-    headers: { "Authorization":"Bearer "+c.token, "Accept":"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28" },
-    body: body ? JSON.stringify(body) : undefined
+    method, headers, body: body ? JSON.stringify(body) : undefined
   });
   if(!res.ok){ const t=await res.text().catch(()=>""); throw new Error(`GitHub ${res.status}: ${t.slice(0,120)}`); }
   return res.status===204 ? null : res.json();
+}
+function shareLink(withToken){
+  const c = syncCfg();
+  let url = location.origin + location.pathname + "#gist=" + encodeURIComponent(c.gistId);
+  if(withToken && c.token) url += "&token=" + encodeURIComponent(c.token);
+  return url;
 }
 function payload(){ return JSON.stringify({ version:2, updatedAt: localUpdatedAt(), cats: CATS, events }, null, 2); }
 function adoptRemote(remote, remoteAt){
@@ -828,27 +840,30 @@ function adoptRemote(remote, remoteAt){
 async function connectSync(){
   const token = $("syncToken").value.trim();
   let gistId = $("syncGistId").value.trim();
-  if(!token){ $("syncToken").focus(); return; }
-  localStorage.setItem(LS_TOKEN, token);
+  if(!token && !gistId){ alert("トークン、またはGist IDのどちらかを入力してください。\n・PC（編集する端末）＝トークン\n・スマホ（閲覧のみ）＝Gist ID だけでOK"); return; }
+  if(token) localStorage.setItem(LS_TOKEN, token);
   setSyncBusy("接続中…");
   try{
     if(gistId){
       localStorage.setItem(LS_GIST, gistId);
-      await pullGist(true);            // 既存Gistから取得して合流
+      localStorage.setItem(LS_AUTO, "1");
+      await reconcileOnLoad();          // タイムスタンプ比較で安全に合流（既存データを消さない）
     } else {
       const g = await gh("POST","/gists",{ description:"タスクカレンダー同期データ", public:false, files:{ [GIST_FILE]:{ content: payload() } } });
       localStorage.setItem(LS_GIST, g.id);
+      localStorage.setItem(LS_AUTO, "1");
       localStorage.setItem(LS_PUSHED, new Date().toISOString());
     }
-    localStorage.setItem(LS_AUTO, "1");
     refreshSyncUI(); render();
-    alert("同期をセットアップしました。他の端末では同じGist IDとトークンで接続してください。");
-  }catch(e){ alert("接続に失敗しました。\n"+e.message); localStorage.removeItem(LS_TOKEN); }
+    alert(canWrite()
+      ? "同期をセットアップしました（編集OK）。\n『📱スマホ用リンク（閲覧）』をコピーしてスマホで開けば、PCの変更が自動反映されます。"
+      : "閲覧モードで接続しました。PC側の変更が自動で反映されます。");
+  }catch(e){ alert("接続に失敗しました。\n"+e.message); }
   refreshSyncUI();
 }
 
 async function pushGist(manual){
-  if(!isConfigured()) { if(manual) alert("先にセットアップしてください。"); return; }
+  if(!canWrite()) { if(manual) alert("この端末は閲覧モードです（トークン未登録）。送信するにはトークンを登録してください。"); return; }
   if(syncing) return; syncing=true; setSyncBusy("送信中…");
   try{
     await gh("PATCH","/gists/"+syncCfg().gistId, { files:{ [GIST_FILE]:{ content: payload() } } });
@@ -875,7 +890,7 @@ async function pullGist(manual){
 
 async function reconcileOnLoad(){
   const c = syncCfg();
-  if(!isConfigured() || !c.auto) return;
+  if(!hasGist() || !c.auto) return;
   syncing=true; setSyncBusy("同期中…");
   try{
     const g = await gh("GET","/gists/"+c.gistId);
@@ -885,7 +900,7 @@ async function reconcileOnLoad(){
     if(remoteAt > localUpdatedAt()){
       adoptRemote(remote, remoteAt);
       render();
-    } else if(localUpdatedAt() > remoteAt){
+    } else if(canWrite() && localUpdatedAt() > remoteAt){
       await gh("PATCH","/gists/"+c.gistId, { files:{ [GIST_FILE]:{ content: payload() } } });
     }
     localStorage.setItem(LS_PUSHED, new Date().toISOString());
@@ -895,7 +910,7 @@ async function reconcileOnLoad(){
 
 function scheduleAutoPush(){
   const c = syncCfg();
-  if(!isConfigured() || !c.auto) return;
+  if(!canWrite() || !c.auto) return;
   clearTimeout(autoPushTimer);
   autoPushTimer = setTimeout(()=>pushGist(false), 1500);
 }
@@ -912,15 +927,17 @@ function fmtTime(iso){ if(!iso) return "—"; const d=new Date(iso); return `${d
 
 function refreshSyncUI(){
   const configured = isConfigured();
+  const writer = canWrite();
   const st = $("syncStatus"), text=$("syncStatusText"), sub=$("syncSub");
   $("syncSetup").style.display = configured ? "none" : "flex";
   $("syncControls").style.display = configured ? "flex" : "none";
   st.classList.toggle("on", configured);
   if(busyText && syncing){ text.textContent = busyText; }
-  else if(configured){ text.textContent = "同期: 接続済み"; sub.textContent = "最終同期: "+fmtTime(localStorage.getItem(LS_PUSHED)); }
+  else if(configured){ text.textContent = writer ? "同期: 接続済み（編集OK）" : "同期: 閲覧モード（自動反映）"; sub.textContent = "最終同期: "+fmtTime(localStorage.getItem(LS_PUSHED)); }
   else { text.textContent = "同期: 未設定"; sub.textContent = "GitHub Gist経由でPC⇄スマホのデータを同期します。"; }
   const auto = $("syncAuto"); if(auto) auto.checked = syncCfg().auto;
   const idshow = $("syncGistIdShow"); if(idshow) idshow.textContent = configured ? ("Gist ID: "+syncCfg().gistId) : "";
+  const shareRow = $("syncShareRow"); if(shareRow) shareRow.style.display = writer ? "flex" : "none";
   // menu button dot
   let dot = document.getElementById("menuDot");
   if(configured && !dot){ dot=document.createElement("span"); dot.id="menuDot"; dot.className="badge-mini"; dot.style.display="block"; $("btnMenu").appendChild(dot); }
@@ -934,12 +951,32 @@ $("syncPull").onclick = ()=>pullGist(true);
 $("syncAuto").onchange = e=>{ localStorage.setItem(LS_AUTO, e.target.checked?"1":"0"); if(e.target.checked) reconcileOnLoad(); };
 $("syncDisconnect").onclick = disconnectSync;
 $("syncCopyId").onclick = ()=>{ navigator.clipboard.writeText(syncCfg().gistId).then(()=>alert("Gist IDをコピーしました。")); };
+function copyShare(withToken){
+  const url = shareLink(withToken);
+  const done = ()=> alert((withToken?"編集可リンク":"閲覧リンク")+"をコピーしました。\nスマホでこのリンクを開き、ホーム画面に追加してください。"+(withToken?"\n※このリンクにはトークンが含まれます。取り扱い注意。":""));
+  navigator.clipboard.writeText(url).then(done, ()=>{ prompt("コピーできませんでした。手動でコピーしてください:", url); });
+}
+$("syncShareView").onclick = ()=>copyShare(false);
+$("syncShareEdit").onclick = ()=>copyShare(true);
 window.addEventListener("focus", ()=>{ if(document.visibilityState==="visible") reconcileOnLoad(); });
 
 /* ---------- service worker ---------- */
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(e=>console.warn("SW register failed", e)));
 }
+
+/* ---------- auto-config from share link (#gist=...&token=...) ---------- */
+(function initFromHash(){
+  if(!location.hash) return;
+  const h = new URLSearchParams(location.hash.replace(/^#/,""));
+  const g = h.get("gist");
+  if(g){
+    localStorage.setItem(LS_GIST, g);
+    localStorage.setItem(LS_AUTO, "1");
+    const t = h.get("token"); if(t) localStorage.setItem(LS_TOKEN, t);
+    history.replaceState(null, "", location.pathname + location.search);  // URLからトークン等を消す
+  }
+})();
 
 /* ---------- boot ---------- */
 applyTheme(localStorage.getItem(LS_THEME) || "light");
