@@ -137,7 +137,68 @@
   .badge.over{background:#ef4444;color:#fff} .badge.far{background:var(--surface-2);color:var(--text-dim); border:1px solid var(--border)}
   html[data-theme="dark"] .badge.soon{background:#3a2c14;color:#f5b25a}
   html[data-theme="dark"] .badge.today{background:#3a1e1e;color:#ff8a8a}
-  .up-empty{padding:30px 16px; text-align:center; color:var(--text-faint); font-size:13px}
+  .up-empty{padding:30px 16px; text-align:center; color:var(--text-faint); font-size:13px; line-height:1.6}
+  .side-sep{height:1px;background:var(--border);margin:6px 12px 0}
+  .side h3 .count{font-size:11px;color:var(--text-faint);font-weight:800}
+
+  /* ToDo checkbox */
+  .up-check{width:22px;height:22px;flex:0 0 auto;border:2px solid var(--cat,var(--accent));border-radius:7px;
+    display:grid;place-items:center;cursor:pointer;transition:background .15s,transform .1s;background:transparent}
+  .up-check:hover{background:color-mix(in srgb,var(--cat,var(--accent)) 16%,transparent)}
+  .up-check:active{transform:scale(.9)}
+  .up-check.checked{background:var(--cat,var(--accent))}
+  .up-check svg{width:13px;height:13px;stroke:#fff;stroke-width:3.4;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .15s}
+  .up-check.checked svg{opacity:1}
+  .up-check.sm{width:18px;height:18px;border-radius:6px;align-self:center}
+  .up-check.sm svg{width:11px;height:11px}
+  .done-toggle{font-size:12px;font-weight:700;color:var(--text-dim);padding:9px 12px;cursor:pointer;text-align:center}
+  .done-toggle:hover{color:var(--accent)}
+
+  /* task tag */
+  .tag-task{font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;flex:0 0 auto;
+    background:color-mix(in srgb,var(--cat,var(--accent)) 16%,transparent);color:var(--cat,var(--accent));letter-spacing:.4px}
+
+  /* urgency sizing — closer deadline = bigger & louder */
+  .up-item{transition:padding .15s}
+  .up-item.u-soon .up-title{font-size:15px}
+  .up-item.u-soon .badge{transform:scale(1.02)}
+  .up-item.u-today, .up-item.u-over{padding-top:12px;padding-bottom:12px;border-radius:12px}
+  .up-item.u-today .up-title, .up-item.u-over .up-title{font-size:16.5px;font-weight:800;letter-spacing:.2px}
+  .up-item.u-today .up-check, .up-item.u-over .up-check{width:24px;height:24px}
+  .up-item.u-over{background:color-mix(in srgb,var(--sun) 10%,transparent)}
+  .up-item.u-today{background:color-mix(in srgb,var(--sun) 6%,transparent)}
+  .up-item.u-over .badge, .up-item.u-today .badge{font-size:12px;padding:4px 11px}
+  .up-item.u-over .bar, .up-item.u-today .bar{width:5px}
+  .pulse{position:relative}
+  .pulse::before{content:"";position:absolute;inset:-1px;border-radius:12px;border:2px solid var(--sun);
+    opacity:0;animation:pulsering 1.9s cubic-bezier(.4,0,.6,1) infinite;pointer-events:none}
+  @keyframes pulsering{0%{opacity:.55;transform:scale(.99)}70%{opacity:0;transform:scale(1.03)}100%{opacity:0}}
+  @media(prefers-reduced-motion:reduce){ .pulse::before{animation:none} }
+
+  /* calendar chip: urgent task stands out */
+  .ev.urgent{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--sun) 55%,transparent) inset;font-weight:800}
+  .ev-check{width:12px;height:12px;flex:0 0 auto;border:1.6px solid var(--cat,var(--accent));border-radius:3px;position:relative;cursor:pointer}
+  .ev-check.checked{background:var(--cat,var(--accent))}
+  .ev-check.checked::after{content:"";position:absolute;left:3px;top:0;width:3px;height:6px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .ev-ttl{overflow:hidden;text-overflow:ellipsis}
+
+  /* category management */
+  .sec-title{font-size:11.5px;font-weight:800;color:var(--text-dim);margin-bottom:9px;line-height:1.4}
+  .cat-list{display:flex;flex-direction:column;gap:6px;margin-bottom:11px}
+  .cat-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+  .cat-row .sw{width:18px;height:18px;border-radius:6px;flex:0 0 auto;cursor:pointer;border:1px solid rgba(0,0,0,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+  .cat-row .cname{flex:1;font-size:13.5px;font-weight:700;outline:none;border-radius:5px;padding:1px 3px}
+  .cat-row .cname:focus{background:var(--surface);box-shadow:0 0 0 2px var(--accent-soft)}
+  .cat-task-toggle{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;cursor:pointer;border:1px solid var(--border);color:var(--text-faint);user-select:none;letter-spacing:.3px}
+  .cat-task-toggle.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .cat-del{cursor:pointer;color:var(--text-faint);font-size:18px;line-height:1;padding:0 3px}
+  .cat-del:hover{color:var(--sun)}
+  .cat-add{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .cat-add input[type=text]{flex:1;min-width:130px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:9px;padding:9px 11px;font-size:13px;font-family:inherit;outline:none}
+  .cat-add input[type=text]:focus{border-color:var(--accent)}
+  .cat-add input[type=color]{width:40px;height:36px;border:1px solid var(--border);border-radius:9px;background:none;cursor:pointer;padding:2px}
+  .check.mini{font-size:12px;font-weight:700;gap:6px}
+  .check.mini input{width:16px;height:16px}
 
   /* Modal */
   .overlay{position:fixed; inset:0; background:rgba(10,14,25,.5); backdrop-filter:blur(3px); display:none; place-items:center; z-index:50; padding:16px}
@@ -206,7 +267,10 @@
 
     <!-- Sidebar -->
     <aside class="card side">
-      <h3>⏳ 締切・今後の予定</h3>
+      <h3>📋 タスク / ToDo <span class="count" id="todoCount"></span></h3>
+      <div class="up" id="todos"></div>
+      <div class="side-sep"></div>
+      <h3>⏳ 今後の予定</h3>
       <div class="up" id="upcoming"></div>
     </aside>
   </div>
@@ -289,6 +353,20 @@
 
       <div class="divider"></div>
 
+      <!-- Category management -->
+      <div>
+        <div class="sec-title">カテゴリ（名前クリックで改名・■で色変更・「タスク」でToDo化）</div>
+        <div id="catList" class="cat-list"></div>
+        <div class="cat-add">
+          <input type="text" id="newCatName" placeholder="新しいカテゴリ名" maxlength="16">
+          <input type="color" id="newCatColor" value="#f59e0b" title="色">
+          <label class="check mini"><input type="checkbox" id="newCatTask"> タスク</label>
+          <button class="btn primary" id="addCatBtn">追加</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
       <button class="btn" id="expJson">⬇ JSONバックアップを保存</button>
       <button class="btn" id="impJson">⬆ JSONバックアップから復元</button>
       <button class="btn" id="expIcs">📆 Googleカレンダー用 .ics を書き出し</button>
@@ -310,17 +388,22 @@ const LS_TOKEN  = "taskCal.sync.token.v1";
 const LS_GIST   = "taskCal.sync.gistId.v1";
 const LS_AUTO   = "taskCal.sync.auto.v1";
 const LS_PUSHED = "taskCal.sync.lastSync.v1";
+const LS_CATS   = "taskCal.cats.v1";
 const GIST_FILE = "task-calendar-data.json";
-const CATS = [
-  {id:"matsuo", name:"松尾研課題", varc:"--c-matsuo"},
-  {id:"univ",   name:"大学課題",   varc:"--c-univ"},
-  {id:"exam",   name:"大学テスト", varc:"--c-exam"},
-  {id:"intern", name:"インターン", varc:"--c-intern"},
-  {id:"other",  name:"その他",     varc:"--c-other"},
+const DEFAULT_CATS = [
+  {id:"matsuo", name:"松尾研課題", color:"#f0663c", isTask:true},
+  {id:"univ",   name:"大学課題",   color:"#3b82f6", isTask:true},
+  {id:"exam",   name:"大学テスト", color:"#8b5cf6", isTask:false},
+  {id:"intern", name:"インターン", color:"#10b981", isTask:false},
+  {id:"other",  name:"その他",     color:"#94a3b8", isTask:false},
 ];
+function normCat(c){ return { id:String(c.id), name:String(c.name||"無題").slice(0,16), color:/^#[0-9a-fA-F]{6}$/.test(c.color||"")?c.color:"#94a3b8", isTask:!!c.isTask }; }
+function loadCats(){ const v=load(LS_CATS,null); return (Array.isArray(v)&&v.length) ? v.map(normCat) : DEFAULT_CATS.map(c=>({...c})); }
+let CATS = loadCats();
+function saveCats(bump=true){ localStorage.setItem(LS_CATS, JSON.stringify(CATS)); if(bump){ localStorage.setItem(LS_UPDATED, new Date().toISOString()); scheduleAutoPush(); } }
 const WD = ["日","月","火","水","木","金","土"];
-const catById = id => CATS.find(c=>c.id===id) || CATS[CATS.length-1];
-const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const catById = id => CATS.find(c=>c.id===id) || CATS[CATS.length-1] || {id:"other",name:"その他",color:"#94a3b8",isTask:false};
+const isTaskCat = id => !!catById(id).isTask;
 
 /* ---------- state ---------- */
 let events = load(LS_EVENTS, []);
@@ -353,7 +436,18 @@ function diffDays(dateStr){
 /* ---------- rendering ---------- */
 const $ = id => document.getElementById(id);
 
-function render(){ renderFilters(); renderCalHeaderTitle(); (view==="month"?renderMonth:renderAgenda)(); renderUpcoming(); }
+function render(){ renderFilters(); renderCalHeaderTitle(); (view==="month"?renderMonth:renderAgenda)(); renderTodos(); renderUpcoming(); }
+
+/* urgency tier by days-to-deadline */
+function urgency(dd){
+  if(dd<0)   return { cls:"u-over",  pulse:true,  badge:`${-dd}日超過`, bcls:"over"  };
+  if(dd===0) return { cls:"u-today", pulse:true,  badge:"今日",         bcls:"today" };
+  if(dd<=2)  return { cls:"u-soon",  pulse:false, badge:`あと${dd}日`,  bcls:"soon"  };
+  if(dd<=3)  return { cls:"",        pulse:false, badge:`あと${dd}日`,  bcls:"soon"  };
+  return       { cls:"",        pulse:false, badge:`あと${dd}日`,  bcls:"far"   };
+}
+function toggleDone(id){ const e=events.find(x=>x.id===id); if(!e) return; e.done=!e.done; save(); render(); }
+const CHECK_SVG = `<svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>`;
 
 function renderCalHeaderTitle(){
   $("monthTitle").innerHTML = `${cursor.getFullYear()}年 ${cursor.getMonth()+1}月`;
@@ -364,7 +458,7 @@ function renderFilters(){
   CATS.forEach(c=>{
     const el = document.createElement("div");
     el.className = "chip" + (hidden.has(c.id)?" off":"");
-    el.innerHTML = `<span class="dot" style="background:var(${c.varc})"></span>${c.name}`;
+    el.innerHTML = `<span class="dot" style="background:${c.color}"></span>${c.name}`;
     el.onclick = ()=>{ hidden.has(c.id)?hidden.delete(c.id):hidden.add(c.id); saveHidden(); render(); };
     box.appendChild(el);
   });
@@ -406,6 +500,8 @@ function renderMonth(){
   body.innerHTML = html;
   body.querySelectorAll(".cell").forEach(c=>{
     c.onclick = ev=>{
+      const checkEl = ev.target.closest(".ev-check");
+      if(checkEl){ ev.stopPropagation(); toggleDone(checkEl.dataset.check); return; }
       const chipEl = ev.target.closest(".ev");
       if(chipEl){ openEdit(chipEl.dataset.id); }
       else { openAdd(c.dataset.date); }
@@ -415,9 +511,12 @@ function renderMonth(){
 
 function chip(e){
   const c = catById(e.category);
-  const col = cssVar(c.varc);
-  return `<div class="ev ${e.done?'done':''}" data-id="${e.id}" style="--cat:${col};--cat-soft:color-mix(in srgb,${col} 14%,transparent)">
-    ${e.time?`<span class="t">${e.time}</span>`:""}<span>${escapeHtml(e.title)}</span></div>`;
+  const col = c.color;
+  const dd = diffDays(e.date);
+  const urgent = !e.done && dd<=0 ? " urgent" : "";
+  const check = c.isTask ? `<span class="ev-check ${e.done?'checked':''}" data-check="${e.id}"></span>` : "";
+  return `<div class="ev ${e.done?'done':''}${urgent}" data-id="${e.id}" style="--cat:${col};--cat-soft:color-mix(in srgb,${col} 14%,transparent)">
+    ${check}${e.time?`<span class="t">${e.time}</span>`:""}<span class="ev-ttl">${escapeHtml(e.title)}</span></div>`;
 }
 
 function renderAgenda(){
@@ -433,46 +532,85 @@ function renderAgenda(){
     const d = parseYmd(ds);
     html += `<div class="agenda-day"><div class="agenda-date">${d.getMonth()+1}/${d.getDate()} <span class="wd">(${WD[d.getDay()]})</span></div>`;
     byDate[ds].forEach(e=>{
-      const col = cssVar(catById(e.category).varc);
+      const c = catById(e.category); const col = c.color;
+      const lead = c.isTask
+        ? `<div class="up-check sm ${e.done?'checked':''}" data-check="${e.id}">${CHECK_SVG}</div>`
+        : `<div class="bar"></div>`;
       html += `<div class="agenda-row ${e.done?'done':''}" data-id="${e.id}" style="--cat:${col}">
-        <div class="bar"></div>
+        ${lead}
         <div class="ttl">${e.time?`<span style="color:var(--text-dim);font-size:13px;margin-right:6px">${e.time}</span>`:""}${escapeHtml(e.title)}</div>
-        <span class="chip" style="pointer-events:none"><span class="dot" style="background:${col}"></span>${catById(e.category).name}</span>
+        ${c.isTask?`<span class="tag-task" style="--cat:${col}">タスク</span>`:""}
+        <span class="chip" style="pointer-events:none"><span class="dot" style="background:${col}"></span>${c.name}</span>
       </div>`;
     });
     html += `</div>`;
   });
   html += `</div>`;
   body.innerHTML = html;
+  body.querySelectorAll(".up-check").forEach(ch=> ch.onclick = ev=>{ ev.stopPropagation(); toggleDone(ch.dataset.check); });
   body.querySelectorAll(".agenda-row").forEach(r=> r.onclick = ()=> openEdit(r.dataset.id));
 }
 
+/* ToDo list = task-type categories, with tickable checkboxes */
+let showDoneTasks = false;
+function todoRow(e){
+  const c = catById(e.category); const col = c.color;
+  const dd = diffDays(e.date); const u = urgency(dd);
+  const d = parseYmd(e.date);
+  const size = e.done ? "" : u.cls;
+  const pulse = (!e.done && u.pulse) ? " pulse" : "";
+  return `<div class="up-item ${e.done?'done':''} ${size}${pulse}" data-id="${e.id}" style="--cat:${col}">
+    <div class="up-check ${e.done?'checked':''}" data-check="${e.id}">${CHECK_SVG}</div>
+    <div class="up-main">
+      <div class="up-title">${escapeHtml(e.title)}</div>
+      <div class="up-sub">${d.getMonth()+1}/${d.getDate()} (${WD[d.getDay()]})${e.time?" "+e.time:""} · ${c.name}</div>
+    </div>
+    ${e.done?"":`<span class="badge ${u.bcls}">${u.badge}</span>`}
+  </div>`;
+}
+function renderTodos(){
+  const box = $("todos");
+  const tasks = events.filter(e=> isTaskCat(e.category) && !hidden.has(e.category));
+  const pending = tasks.filter(e=>!e.done)
+    .sort((a,b)=> a.date===b.date ? (a.time||"99").localeCompare(b.time||"99") : a.date.localeCompare(b.date));
+  const done = tasks.filter(e=>e.done).sort((a,b)=> b.date.localeCompare(a.date));
+  $("todoCount").textContent = pending.length ? `(${pending.length})` : "";
+  if(!pending.length && !done.length){
+    box.innerHTML = `<div class="up-empty">タスクはありません。<br>「タスク」設定のカテゴリ（松尾研課題・大学課題など）を追加すると、ここにToDoとして並びます。</div>`;
+    return;
+  }
+  let html = pending.map(todoRow).join("");
+  if(done.length){
+    html += `<div class="done-toggle" id="doneToggle">完了済み ${done.length}件 ${showDoneTasks?"▲":"▼"}</div>`;
+    if(showDoneTasks) html += done.slice(0,50).map(todoRow).join("");
+  }
+  box.innerHTML = html;
+  box.querySelectorAll(".up-check").forEach(ch=> ch.onclick = ev=>{ ev.stopPropagation(); toggleDone(ch.dataset.check); });
+  box.querySelectorAll(".up-item").forEach(r=> r.onclick = ()=> openEdit(r.dataset.id));
+  const dt = $("doneToggle"); if(dt) dt.onclick = ()=>{ showDoneTasks=!showDoneTasks; renderTodos(); };
+}
+
+/* Upcoming = non-task schedule items (exam / intern / other) */
 function renderUpcoming(){
   const box = $("upcoming");
-  const today = todayStr();
   const list = visibleEvents()
-    .filter(e=> e.date>=today || (!e.done))
-    .filter(e=> e.done ? false : true)          // hide completed from upcoming
-    .filter(e=> diffDays(e.date) >= -14)         // keep recently overdue for 2 weeks
+    .filter(e=> !isTaskCat(e.category))
+    .filter(e=> !e.done)
+    .filter(e=> diffDays(e.date) >= -3)          // recently overdue kept briefly
     .sort((a,b)=> a.date===b.date ? (a.time||"99").localeCompare(b.time||"99") : a.date.localeCompare(b.date))
     .slice(0,40);
   if(!list.length){ box.innerHTML = `<div class="up-empty">今後の予定はありません 🎉</div>`; return; }
   box.innerHTML = list.map(e=>{
-    const c = catById(e.category); const col = cssVar(c.varc);
-    const dd = diffDays(e.date);
-    let badge, cls;
-    if(dd<0){ badge=`${-dd}日超過`; cls="over"; }
-    else if(dd===0){ badge="今日"; cls="today"; }
-    else if(dd<=3){ badge=`あと${dd}日`; cls="soon"; }
-    else{ badge=`あと${dd}日`; cls="far"; }
+    const c = catById(e.category); const col = c.color;
+    const dd = diffDays(e.date); const u = urgency(dd);
     const d = parseYmd(e.date);
-    return `<div class="up-item ${e.done?'done':''}" data-id="${e.id}" style="--cat:${col}">
+    return `<div class="up-item ${u.cls}${u.pulse?" pulse":""}" data-id="${e.id}" style="--cat:${col}">
       <div class="bar"></div>
       <div class="up-main">
         <div class="up-title">${escapeHtml(e.title)}</div>
         <div class="up-sub">${d.getMonth()+1}/${d.getDate()} (${WD[d.getDay()]})${e.time?" "+e.time:""} · ${c.name}</div>
       </div>
-      <span class="badge ${cls}">${badge}</span>
+      <span class="badge ${u.bcls}">${u.badge}</span>
     </div>`;
   }).join("");
   box.querySelectorAll(".up-item").forEach(r=> r.onclick = ()=> openEdit(r.dataset.id));
@@ -484,12 +622,13 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<
 let selectedCat = "matsuo";
 function buildCatGrid(){
   const g = $("fCatGrid"); g.innerHTML = "";
+  if(!CATS.some(c=>c.id===selectedCat)) selectedCat = (CATS[0]||{}).id;
   CATS.forEach(c=>{
-    const col = cssVar(c.varc);
+    const col = c.color;
     const el = document.createElement("div");
     el.className = "catopt"+(c.id===selectedCat?" on":"");
     el.style.setProperty("--cc", col);
-    el.innerHTML = `<span class="dot" style="background:${col}"></span>${c.name}`;
+    el.innerHTML = `<span class="dot" style="background:${col}"></span>${c.name}${c.isTask?` <span class="tag-task" style="--cat:${col}">タスク</span>`:""}`;
     el.onclick = ()=>{ selectedCat=c.id; buildCatGrid(); };
     g.appendChild(el);
   });
@@ -500,7 +639,7 @@ function openAdd(dateStr){
   $("mDelete").style.display = "none";
   $("fTitle").value = ""; $("fDate").value = dateStr || todayStr();
   $("fTime").value=""; $("fMemo").value=""; $("fDone").checked=false;
-  selectedCat = "matsuo"; buildCatGrid();
+  selectedCat = (CATS.find(c=>c.isTask)||CATS[0]||{}).id; buildCatGrid();
   showOverlay("overlay"); setTimeout(()=>$("fTitle").focus(),50);
 }
 function openEdit(id){
@@ -532,6 +671,52 @@ function deleteEvent(){
 function showOverlay(id){ $(id).classList.add("show"); }
 function hideOverlay(id){ $(id).classList.remove("show"); $("fTitle").style.borderColor=""; }
 
+/* ---------- category management ---------- */
+function renderCatManager(){
+  const box = $("catList"); if(!box) return; box.innerHTML = "";
+  CATS.forEach(c=>{
+    const row = document.createElement("div"); row.className = "cat-row";
+    row.innerHTML =
+      `<span class="sw" style="background:${c.color}" data-color="${c.id}" title="色を変更"></span>`+
+      `<span class="cname" contenteditable="true" spellcheck="false" data-name="${c.id}">${escapeHtml(c.name)}</span>`+
+      `<span class="cat-task-toggle ${c.isTask?'on':''}" data-task="${c.id}" title="ToDoとして扱う">タスク</span>`+
+      `<span class="cat-del" data-del="${c.id}" title="削除">×</span>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll("[data-color]").forEach(sw=> sw.onclick = ()=> pickColor(sw.dataset.color));
+  box.querySelectorAll("[data-name]").forEach(nm=>{
+    nm.onblur = ()=>{ const c=CATS.find(x=>x.id===nm.dataset.name); if(!c) return; const t=nm.textContent.trim().slice(0,16); c.name = t||c.name; nm.textContent=c.name; saveCats(); render(); };
+    nm.onkeydown = e=>{ if(e.key==="Enter"){ e.preventDefault(); nm.blur(); } };
+  });
+  box.querySelectorAll("[data-task]").forEach(tg=> tg.onclick = ()=>{ const c=CATS.find(x=>x.id===tg.dataset.task); if(!c) return; c.isTask=!c.isTask; saveCats(); renderCatManager(); render(); });
+  box.querySelectorAll("[data-del]").forEach(dl=> dl.onclick = ()=> deleteCat(dl.dataset.del));
+}
+function pickColor(id){
+  const c = CATS.find(x=>x.id===id); if(!c) return;
+  const inp = document.createElement("input"); inp.type="color"; inp.value=c.color;
+  inp.style.position="fixed"; inp.style.left="-9999px"; document.body.appendChild(inp);
+  inp.onchange = ()=>{ c.color=inp.value; saveCats(); renderCatManager(); render(); inp.remove(); };
+  inp.click();
+}
+function deleteCat(id){
+  if(CATS.length<=1){ alert("最後のカテゴリは削除できません。"); return; }
+  const c = CATS.find(x=>x.id===id); if(!c) return;
+  const used = events.filter(e=>e.category===id).length;
+  const fallback = CATS.find(x=>x.id!==id).id;
+  if(!confirm(`カテゴリ「${c.name}」を削除しますか？`+(used?`\nこのカテゴリの予定 ${used}件は「${catById(fallback).name}」に移動します。`:""))) return;
+  events.forEach(e=>{ if(e.category===id) e.category=fallback; });
+  CATS = CATS.filter(x=>x.id!==id);
+  if(selectedCat===id) selectedCat = CATS[0].id;
+  saveCats(); save(); renderCatManager(); render();
+}
+function addCat(){
+  const name = $("newCatName").value.trim(); if(!name){ $("newCatName").focus(); return; }
+  const color = $("newCatColor").value; const isTask = $("newCatTask").checked;
+  CATS.push(normCat({ id:"c"+Date.now()+Math.floor(Math.random()*1000), name, color, isTask }));
+  $("newCatName").value=""; $("newCatTask").checked=false;
+  saveCats(); renderCatManager(); render();
+}
+
 /* ---------- backup / export ---------- */
 function download(name, text, type="text/plain"){
   const blob = new Blob([text], {type});
@@ -540,7 +725,7 @@ function download(name, text, type="text/plain"){
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
 function exportJson(){
-  download(`task-calendar-backup-${todayStr()}.json`, JSON.stringify({version:1, exported:new Date().toISOString(), events}, null, 2), "application/json");
+  download(`task-calendar-backup-${todayStr()}.json`, JSON.stringify({version:2, exported:new Date().toISOString(), cats:CATS, events}, null, 2), "application/json");
 }
 function importJson(file){
   const r = new FileReader();
@@ -550,9 +735,11 @@ function importJson(file){
       const arr = Array.isArray(obj)?obj:obj.events;
       if(!Array.isArray(arr)) throw 0;
       if(!confirm(`${arr.length}件の予定を読み込みます。現在のデータは置き換えられます。よろしいですか？`)) return;
-      events = arr.map(e=>({ id:e.id||("e"+Date.now()+Math.random()), title:String(e.title||""), date:e.date, time:e.time||"", category:CATS.some(c=>c.id===e.category)?e.category:"other", memo:e.memo||"", done:!!e.done }))
+      if(Array.isArray(obj.cats) && obj.cats.length){ CATS = obj.cats.map(normCat); saveCats(false); }
+      const fallback = (CATS[0]||{id:"other"}).id;
+      events = arr.map(e=>({ id:e.id||("e"+Date.now()+Math.random()), title:String(e.title||""), date:e.date, time:e.time||"", category:CATS.some(c=>c.id===e.category)?e.category:fallback, memo:e.memo||"", done:!!e.done }))
                   .filter(e=>e.date);
-      save(); render(); alert("復元しました。");
+      save(); renderCatManager(); render(); alert("復元しました。");
     }catch{ alert("読み込みに失敗しました。JSONバックアップファイルを選んでください。"); }
   };
   r.readAsText(file);
@@ -593,7 +780,7 @@ $("next").onclick = ()=>{ cursor = new Date(cursor.getFullYear(), cursor.getMont
 $("btnToday").onclick = ()=>{ cursor = startOfMonth(new Date()); render(); };
 $("btnAdd").onclick = ()=> openAdd(todayStr());
 $("btnTheme").onclick = toggleTheme;
-$("btnMenu").onclick = ()=> showOverlay("menuOverlay");
+$("btnMenu").onclick = ()=>{ renderCatManager(); showOverlay("menuOverlay"); };
 $("viewSeg").querySelectorAll("button").forEach(b=> b.onclick=()=>{
   view=b.dataset.view; $("viewSeg").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); render();
 });
@@ -605,6 +792,8 @@ $("expJson").onclick = exportJson;
 $("expIcs").onclick = exportIcs;
 $("impJson").onclick = ()=> $("fileInput").click();
 $("fileInput").onchange = ev=>{ if(ev.target.files[0]) importJson(ev.target.files[0]); ev.target.value=""; };
+$("addCatBtn").onclick = addCat;
+$("newCatName").addEventListener("keydown", e=>{ if(e.key==="Enter") addCat(); });
 document.addEventListener("keydown", e=>{
   if(e.key==="Escape"){ hideOverlay("overlay"); hideOverlay("menuOverlay"); }
   if(e.key==="Enter" && $("overlay").classList.contains("show") && document.activeElement.id==="fTitle"){ saveEvent(); }
@@ -627,7 +816,14 @@ async function gh(method, path, body){
   if(!res.ok){ const t=await res.text().catch(()=>""); throw new Error(`GitHub ${res.status}: ${t.slice(0,120)}`); }
   return res.status===204 ? null : res.json();
 }
-function payload(){ return JSON.stringify({ version:1, updatedAt: localUpdatedAt(), events }, null, 2); }
+function payload(){ return JSON.stringify({ version:2, updatedAt: localUpdatedAt(), cats: CATS, events }, null, 2); }
+function adoptRemote(remote, remoteAt){
+  events = Array.isArray(remote.events)?remote.events:[];
+  if(Array.isArray(remote.cats) && remote.cats.length){ CATS = remote.cats.map(normCat); localStorage.setItem(LS_CATS, JSON.stringify(CATS)); }
+  localStorage.setItem(LS_EVENTS, JSON.stringify(events));
+  localStorage.setItem(LS_UPDATED, remoteAt);
+  renderCatManager();
+}
 
 async function connectSync(){
   const token = $("syncToken").value.trim();
@@ -670,11 +866,7 @@ async function pullGist(manual){
     if(!file || !file.content) throw new Error("同期ファイルが見つかりません");
     const remote = JSON.parse(file.content);
     const remoteAt = remote.updatedAt || "1970-01-01T00:00:00.000Z";
-    if(remoteAt >= localUpdatedAt() || manual){
-      events = Array.isArray(remote.events)?remote.events:[];
-      localStorage.setItem(LS_EVENTS, JSON.stringify(events));
-      localStorage.setItem(LS_UPDATED, remoteAt);
-    }
+    if(remoteAt >= localUpdatedAt() || manual){ adoptRemote(remote, remoteAt); }
     localStorage.setItem(LS_PUSHED, new Date().toISOString());
     render();
   }catch(e){ if(manual) alert("取得に失敗しました。\n"+e.message); }
@@ -691,9 +883,7 @@ async function reconcileOnLoad(){
     const remote = file && file.content ? JSON.parse(file.content) : {updatedAt:"1970-01-01T00:00:00.000Z",events:[]};
     const remoteAt = remote.updatedAt || "1970-01-01T00:00:00.000Z";
     if(remoteAt > localUpdatedAt()){
-      events = Array.isArray(remote.events)?remote.events:[];
-      localStorage.setItem(LS_EVENTS, JSON.stringify(events));
-      localStorage.setItem(LS_UPDATED, remoteAt);
+      adoptRemote(remote, remoteAt);
       render();
     } else if(localUpdatedAt() > remoteAt){
       await gh("PATCH","/gists/"+c.gistId, { files:{ [GIST_FILE]:{ content: payload() } } });
@@ -754,6 +944,7 @@ if("serviceWorker" in navigator){
 /* ---------- boot ---------- */
 applyTheme(localStorage.getItem(LS_THEME) || "light");
 render();
+renderCatManager();
 refreshSyncUI();
 reconcileOnLoad();
 </script>
