@@ -154,6 +154,46 @@
   .done-toggle{font-size:12px;font-weight:700;color:var(--text-dim);padding:9px 12px;cursor:pointer;text-align:center}
   .done-toggle:hover{color:var(--accent)}
 
+  /* tip card (ADHD) */
+  .tip-card{margin:12px 12px 0; padding:13px 14px; border-radius:12px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 14%,transparent),color-mix(in srgb,#9d7bff 12%,transparent));
+    border:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+  .tip-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.3px}
+  .tip-shuffle{border:0;background:transparent;cursor:pointer;font-size:15px;padding:2px 4px;border-radius:7px;line-height:1}
+  .tip-shuffle:hover{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+  .tip-body{font-size:14px;font-weight:600;line-height:1.55;margin:7px 0 8px;color:var(--text)}
+  .tip-meta{display:flex;gap:8px;align-items:center;font-size:11px}
+  .tip-cat{font-weight:800;color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);padding:2px 8px;border-radius:20px}
+  .tip-src{color:var(--text-dim)}
+  .tip-disc{font-size:10px;color:var(--text-faint);margin-top:7px;line-height:1.5}
+
+  /* diary / journal */
+  .diary{padding:14px 16px 18px}
+  .diary-datebar{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .diary-date{font-size:17px;font-weight:800}
+  .diary-date .wd{font-size:12px;color:var(--text-dim);font-weight:700;margin-left:2px}
+  .diary-moods{display:flex;gap:8px;margin-bottom:16px}
+  .mood{flex:1;border:1.5px solid var(--border);background:var(--surface-2);border-radius:12px;padding:10px 0;font-size:26px;cursor:pointer;transition:.15s;line-height:1}
+  .mood:hover{border-color:var(--accent)}
+  .mood.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);transform:scale(1.06)}
+  .diary-field{margin-bottom:14px}
+  .diary-field label{display:block;font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px}
+  .diary-field input,.diary-field textarea{width:100%;border:1px solid var(--border);background:var(--surface-2);color:var(--text);
+    border-radius:11px;padding:11px 13px;font-size:15px;font-family:inherit;outline:none;transition:.15s}
+  .diary-field input:focus,.diary-field textarea:focus{border-color:var(--accent);background:var(--surface)}
+  .diary-field textarea{resize:vertical;min-height:120px;line-height:1.6}
+  .diary-saved{height:16px;font-size:11.5px;font-weight:700;color:var(--c-intern);opacity:0;transition:opacity .2s}
+  .diary-saved.show{opacity:1}
+  .diary-sep{height:1px;background:var(--border);margin:8px 0 14px}
+  .diary-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:.12s}
+  .diary-row:hover{background:var(--surface-2)}
+  .diary-row.on{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+  .diary-row-mood{font-size:18px;width:22px;text-align:center;flex:0 0 auto}
+  .diary-row-date{font-size:13px;font-weight:800;flex:0 0 auto;min-width:64px}
+  .diary-row-date .wd{font-size:11px;color:var(--text-dim);font-weight:700;margin-left:2px}
+  .diary-row-snip{font-size:13px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .diary-mark{position:absolute;top:5px;right:5px;font-size:10px;opacity:.85}
+
   /* task tag */
   .tag-task{font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;flex:0 0 auto;
     background:color-mix(in srgb,var(--cat,var(--accent)) 16%,transparent);color:var(--cat,var(--accent));letter-spacing:.4px}
@@ -301,7 +341,7 @@
     <!-- Calendar -->
     <section class="card">
       <div class="calbar">
-        <div class="nav">
+        <div class="nav" id="calNav">
           <button class="btn icon" id="prev">‹</button>
           <button class="btn icon" id="next">›</button>
         </div>
@@ -310,6 +350,7 @@
         <div class="seg" id="viewSeg">
           <button data-view="month" class="on">月</button>
           <button data-view="agenda">リスト</button>
+          <button data-view="diary">日記</button>
         </div>
       </div>
       <div class="filters" id="filters"></div>
@@ -318,6 +359,8 @@
 
     <!-- Sidebar -->
     <aside class="card side">
+      <div class="tip-card" id="tipCard"></div>
+      <div class="side-sep"></div>
       <h3>📋 タスク / ToDo <span class="count" id="todoCount"></span></h3>
       <div class="up" id="todos"></div>
       <div class="side-sep"></div>
@@ -444,7 +487,39 @@ const LS_GIST   = "taskCal.sync.gistId.v1";
 const LS_AUTO   = "taskCal.sync.auto.v1";
 const LS_PUSHED = "taskCal.sync.lastSync.v1";
 const LS_CATS   = "taskCal.cats.v1";
+const LS_DIARY  = "taskCal.diary.v1";
 const GIST_FILE = "task-calendar-data.json";
+/* ADHDに有効とされる行動戦略（出典: CDC / CHADD / NIMH / 認知行動療法・実装意図研究）
+   ※一般的な情報であり医療アドバイスではありません。 */
+const ADHD_TIPS = [
+  {t:"大きな作業は「5分でできる最小の一歩」まで割る。着手の壁が一番の敵。", c:"タスク分割", s:"CDC/CHADD"},
+  {t:"やる気を待たず「2分だけ」始める。動き出すと脳が乗ってくる。", c:"先延ばし対策", s:"CBT/行動療法"},
+  {t:"記憶に頼らず全部書き出す。頭は考える場所、保存は紙やアプリに。", c:"記憶の外部化", s:"CHADD"},
+  {t:"タイマーで25分集中→5分休憩。見えない時間を見える化する。", c:"時間感覚", s:"CBT/行動療法"},
+  {t:"「いつ・どこで・何をするか」を前もって決める（if-thenの実装意図）。", c:"実行意図", s:"実装意図研究"},
+  {t:"難しいことは調子の良い時間帯（例:午前）に置く。", c:"環境調整", s:"CHADD"},
+  {t:"気が散る物を視界から消す。スマホは別の部屋でもいい。", c:"環境調整", s:"CHADD"},
+  {t:"誰かと一緒に作業する（body doubling）。人の存在が集中を助ける。", c:"集中", s:"ADHDコーチング"},
+  {t:"終わったら自分に小さなご褒美。行動の直後の報酬が習慣を作る。", c:"報酬", s:"行動療法"},
+  {t:"完璧より完了。まず60点で出して、後から直す。", c:"先延ばし対策", s:"CBT"},
+  {t:"マルチタスクをやめ、1度に1つ。切り替えは集中を消耗させる。", c:"集中", s:"CDC"},
+  {t:"ToDoは「今日やる3つ」に絞る。多すぎる一覧は麻痺を生む。", c:"優先順位", s:"CHADD"},
+  {t:"「あとでやる」を禁止して「カレンダーの何時にやる」に変換する。", c:"時間管理", s:"CHADD"},
+  {t:"通知をオフにして中断を減らす。1回の中断から戻るのに時間がかかる。", c:"環境調整", s:"CHADD"},
+  {t:"思いついたら即メモ。ワーキングメモリを空けておく。", c:"記憶の外部化", s:"CHADD"},
+  {t:"体を動かすと集中が戻る。落ち着かない時こそ軽い運動を。", c:"身体", s:"CDC"},
+  {t:"睡眠を削らない。寝不足は実行機能（段取り力）を直撃する。", c:"身体", s:"CDC"},
+  {t:"食事を抜かない・規則的に。空腹は衝動性を上げる。", c:"身体", s:"CDC"},
+  {t:"大事な物は「置く場所」を1つに固定。探し物の時間と消耗を減らす。", c:"環境調整", s:"CHADD"},
+  {t:"難所は声に出す/紙に書く。言語化が前頭前野の働きを助ける。", c:"集中", s:"CBT"},
+  {t:"本当の締切の前に「自分締切」を作る。締切効果を前倒しで使う。", c:"時間管理", s:"CHADD"},
+  {t:"退屈な作業は音楽やタイマーで刺激を足し、覚醒を保つ。", c:"集中", s:"行動療法"},
+  {t:"作業開始の儀式を決める（机を1分片づける等）。開始の合図になる。", c:"先延ばし対策", s:"CBT"},
+  {t:"自分を責めない。ADHDは意志の弱さでなく脳の特性。", c:"感情", s:"NIMH"},
+  {t:"週1で振り返り、うまくいった仕組みだけ残す。相性は人それぞれ。", c:"ふりかえり", s:"CHADD"},
+  {t:"助けを求めるのは戦略。ADHDコーチやCBTは有効性が示されている。", c:"サポート", s:"CHADD/CBT"},
+];
+const TIP_SOURCES = "出典: CDC・CHADD・NIMH ／ ※一般情報であり医療アドバイスではありません。困りごとは専門家へ。";
 const DEFAULT_CATS = [
   {id:"matsuo", name:"松尾研課題", color:"#f0663c", isTask:true},
   {id:"univ",   name:"大学課題",   color:"#3b82f6", isTask:true},
@@ -463,9 +538,12 @@ const isTaskCat = id => !!catById(id).isTask;
 /* ---------- state ---------- */
 let events = load(LS_EVENTS, []);
 let hidden = new Set(load(LS_HIDDEN, []));
+let diary = load(LS_DIARY, {});           // { "YYYY-MM-DD": {mood, wins, text} }
 let view = "month";
 let cursor = startOfMonth(new Date());
 let editingId = null;
+let diaryDate = null;                       // 日記ビューで選択中の日付（boot時に今日）
+let tipIndex = 0;                           // 今日のヒントの索引（boot時に日付から決定）
 
 /* ---------- storage helpers ---------- */
 function load(key, def){ try{ const v=JSON.parse(localStorage.getItem(key)); return v??def; }catch{ return def; } }
@@ -475,6 +553,15 @@ function save(bumpTime=true){
 }
 function saveHidden(){ localStorage.setItem(LS_HIDDEN, JSON.stringify([...hidden])); }
 function localUpdatedAt(){ return localStorage.getItem(LS_UPDATED) || "1970-01-01T00:00:00.000Z"; }
+function saveDiary(){
+  // 空の記録は保存しない（掃除）
+  for(const k of Object.keys(diary)){ const e=diary[k]; if(!e || (!e.mood && !(e.wins||"").trim() && !(e.text||"").trim())) delete diary[k]; }
+  localStorage.setItem(LS_DIARY, JSON.stringify(diary));
+  localStorage.setItem(LS_UPDATED, new Date().toISOString());
+  scheduleAutoPush();
+}
+function ensureDiary(ds){ if(!diary[ds]) diary[ds] = {mood:"", wins:"", text:""}; return diary[ds]; }
+function shiftDate(ds, delta){ const d=parseYmd(ds); d.setDate(d.getDate()+delta); return ymd(d); }
 
 /* ---------- date helpers (local, no UTC drift) ---------- */
 function pad(n){ return String(n).padStart(2,"0"); }
@@ -491,7 +578,15 @@ function diffDays(dateStr){
 /* ---------- rendering ---------- */
 const $ = id => document.getElementById(id);
 
-function render(){ renderFilters(); renderCalHeaderTitle(); (view==="month"?renderMonth:renderAgenda)(); renderTodos(); renderUpcoming(); }
+function render(){
+  const cal = view!=="diary";
+  $("filters").style.display = cal ? "" : "none";
+  $("calNav").style.display = cal ? "" : "none";
+  $("monthTitle").style.display = cal ? "" : "none";
+  if(cal){ renderFilters(); renderCalHeaderTitle(); (view==="month"?renderMonth:renderAgenda)(); }
+  else { renderDiary(); }
+  renderTip(); renderTodos(); renderUpcoming();
+}
 function syncViewSeg(){ document.querySelectorAll("#viewSeg button").forEach(b=> b.classList.toggle("on", b.dataset.view===view)); }
 const isMobile = ()=> window.matchMedia && window.matchMedia("(max-width:600px)").matches;
 
@@ -548,8 +643,9 @@ function renderMonth(){
     if(!inMonth) cls.push("dim");
     if(dow===0) cls.push("sun"); if(dow===6) cls.push("sat");
     if(ds===today) cls.push("today");
+    const hasDiary = inMonth && diary[ds];
     html += `<div class="${cls.join(" ")}" data-date="${ds}">
-      <div class="num">${date.getDate()}</div>
+      <div class="num">${date.getDate()}</div>${hasDiary?`<span class="diary-mark">📔</span>`:""}
       <div class="evlist">${shown.map(chip).join("")}
       ${evs.length>3?`<div class="more">+${evs.length-3} 件</div>`:""}</div></div>`;
   }
@@ -675,6 +771,88 @@ function renderUpcoming(){
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 
+/* ---------- ADHD tip card ---------- */
+function renderTip(){
+  const box = $("tipCard"); if(!box) return;
+  const t = ADHD_TIPS[((tipIndex % ADHD_TIPS.length)+ADHD_TIPS.length)%ADHD_TIPS.length];
+  box.innerHTML =
+    `<div class="tip-head"><span>💡 今日のヒント</span><button class="tip-shuffle" id="tipShuffle" title="別のヒント">🔀</button></div>`+
+    `<div class="tip-body">${escapeHtml(t.t)}</div>`+
+    `<div class="tip-meta"><span class="tip-cat">${escapeHtml(t.c)}</span><span class="tip-src">${escapeHtml(t.s)}</span></div>`+
+    `<div class="tip-disc">${escapeHtml(TIP_SOURCES)}</div>`;
+  $("tipShuffle").onclick = ()=>{ tipIndex = (tipIndex + 1 + Math.floor(Math.random()*(ADHD_TIPS.length-1))) % ADHD_TIPS.length; renderTip(); };
+}
+
+/* ---------- diary / journal ---------- */
+const MOODS = [["great","😄","絶好調"],["good","🙂","良い"],["ok","😐","普通"],["low","😞","低め"],["bad","😫","つらい"]];
+function moodEmoji(k){ const m=MOODS.find(x=>x[0]===k); return m?m[1]:""; }
+function flashSaved(){ const el=$("diarySaved"); if(!el) return; el.textContent="自動保存しました"; el.classList.add("show"); clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>el.classList.remove("show"),1200); }
+function renderDiary(){
+  const body = $("calBody");
+  const ds = diaryDate || (diaryDate = todayStr());
+  const existing = body.querySelector(".diary");
+  // 入力中に外部要因（同期など）で再描画されても、フォーカスを奪わない
+  if(existing && existing.dataset.date===ds && existing.contains(document.activeElement)){ refreshDiaryList(); return; }
+  const cur = diary[ds] || {mood:"",wins:"",text:""};
+  const d = parseYmd(ds);
+  body.innerHTML =
+    `<div class="diary" data-date="${ds}">
+      <div class="diary-datebar">
+        <button class="btn icon" id="diaryPrev">‹</button>
+        <div class="diary-date">${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} <span class="wd">(${WD[d.getDay()]})</span></div>
+        <button class="btn icon" id="diaryNext">›</button>
+        <div class="spacer"></div>
+        <button class="btn" id="diaryToday">今日</button>
+      </div>
+      <div class="diary-moods" id="diaryMoods">
+        ${MOODS.map(([k,e,label])=>`<button class="mood ${cur.mood===k?'on':''}" data-mood="${k}" title="${label}">${e}</button>`).join("")}
+      </div>
+      <div class="diary-field">
+        <label>できたこと・よかったこと（1つでOK）</label>
+        <input type="text" id="diaryWins" value="${escapeHtml(cur.wins||'')}" placeholder="例: 課題を1問だけ進めた / 早起きできた" autocomplete="off">
+      </div>
+      <div class="diary-field">
+        <label>ふりかえり・メモ</label>
+        <textarea id="diaryText" placeholder="今日はどんな一日だった？　思ったことをそのまま。">${escapeHtml(cur.text||'')}</textarea>
+      </div>
+      <div class="diary-saved" id="diarySaved"></div>
+      <div class="diary-sep"></div>
+      <div class="sec-title">これまでの記録 <span id="diaryCount"></span></div>
+      <div id="diaryList"></div>
+    </div>`;
+  $("diaryPrev").onclick = ()=>{ diaryDate = shiftDate(ds,-1); renderDiary(); };
+  $("diaryNext").onclick = ()=>{ diaryDate = shiftDate(ds, 1); renderDiary(); };
+  $("diaryToday").onclick = ()=>{ diaryDate = todayStr(); renderDiary(); };
+  $("diaryMoods").querySelectorAll("[data-mood]").forEach(b=> b.onclick = ()=>{
+    const e = ensureDiary(ds); e.mood = (e.mood===b.dataset.mood ? "" : b.dataset.mood);
+    saveDiary();
+    $("diaryMoods").querySelectorAll(".mood").forEach(x=> x.classList.toggle("on", x.dataset.mood===e.mood));
+    flashSaved(); refreshDiaryList();
+  });
+  const onInput = ()=>{ const e=ensureDiary(ds); e.wins=$("diaryWins").value; e.text=$("diaryText").value; saveDiary(); flashSaved(); };
+  $("diaryWins").oninput = onInput;
+  $("diaryText").oninput = onInput;
+  $("diaryWins").onblur = refreshDiaryList;
+  $("diaryText").onblur = refreshDiaryList;
+  refreshDiaryList();
+}
+function refreshDiaryList(){
+  const box = $("diaryList"); if(!box) return;
+  const keys = Object.keys(diary).sort().reverse();
+  $("diaryCount") && ($("diaryCount").textContent = keys.length ? `(${keys.length})` : "");
+  if(!keys.length){ box.innerHTML = `<div class="up-empty">まだ記録がありません。気分だけでもOK。</div>`; return; }
+  box.innerHTML = keys.slice(0,120).map(ds=>{
+    const e = diary[ds]; const d = parseYmd(ds);
+    const snip = (e.wins||e.text||"").replace(/\n/g," ").slice(0,40);
+    return `<div class="diary-row ${ds===diaryDate?'on':''}" data-d="${ds}">
+      <span class="diary-row-mood">${moodEmoji(e.mood)||"·"}</span>
+      <span class="diary-row-date">${d.getMonth()+1}/${d.getDate()}<span class="wd">(${WD[d.getDay()]})</span></span>
+      <span class="diary-row-snip">${escapeHtml(snip)}</span>
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".diary-row").forEach(r=> r.onclick = ()=>{ diaryDate = r.dataset.d; renderDiary(); });
+}
+
 /* ---------- modal ---------- */
 let selectedCat = "matsuo";
 function buildCatGrid(){
@@ -782,7 +960,7 @@ function download(name, text, type="text/plain"){
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
 function exportJson(){
-  download(`task-calendar-backup-${todayStr()}.json`, JSON.stringify({version:2, exported:new Date().toISOString(), cats:CATS, events}, null, 2), "application/json");
+  download(`task-calendar-backup-${todayStr()}.json`, JSON.stringify({version:3, exported:new Date().toISOString(), cats:CATS, events, diary}, null, 2), "application/json");
 }
 function importJson(file){
   const r = new FileReader();
@@ -793,6 +971,7 @@ function importJson(file){
       if(!Array.isArray(arr)) throw 0;
       if(!confirm(`${arr.length}件の予定を読み込みます。現在のデータは置き換えられます。よろしいですか？`)) return;
       if(Array.isArray(obj.cats) && obj.cats.length){ CATS = obj.cats.map(normCat); saveCats(false); }
+      if(obj.diary && typeof obj.diary==="object"){ diary = obj.diary; localStorage.setItem(LS_DIARY, JSON.stringify(diary)); }
       const fallback = (CATS[0]||{id:"other"}).id;
       events = arr.map(e=>({ id:e.id||("e"+Date.now()+Math.random()), title:String(e.title||""), date:e.date, time:e.time||"", category:CATS.some(c=>c.id===e.category)?e.category:fallback, memo:e.memo||"", done:!!e.done }))
                   .filter(e=>e.date);
@@ -881,10 +1060,11 @@ function shareLink(withToken){
   if(withToken && c.token) url += "&token=" + encodeURIComponent(c.token);
   return url;
 }
-function payload(){ return JSON.stringify({ version:2, updatedAt: localUpdatedAt(), cats: CATS, events }, null, 2); }
+function payload(){ return JSON.stringify({ version:3, updatedAt: localUpdatedAt(), cats: CATS, events, diary }, null, 2); }
 function adoptRemote(remote, remoteAt){
   events = Array.isArray(remote.events)?remote.events:[];
   if(Array.isArray(remote.cats) && remote.cats.length){ CATS = remote.cats.map(normCat); localStorage.setItem(LS_CATS, JSON.stringify(CATS)); }
+  if(remote.diary && typeof remote.diary==="object"){ diary = remote.diary; localStorage.setItem(LS_DIARY, JSON.stringify(diary)); }
   localStorage.setItem(LS_EVENTS, JSON.stringify(events));
   localStorage.setItem(LS_UPDATED, remoteAt);
   renderCatManager();
@@ -1033,6 +1213,8 @@ if("serviceWorker" in navigator){
 
 /* ---------- boot ---------- */
 applyTheme(localStorage.getItem(LS_THEME) || "light");
+diaryDate = todayStr();
+tipIndex = (function(){ const n=new Date(); const s=new Date(n.getFullYear(),0,0); return Math.floor((n-s)/86400000); })(); // 日替わりヒント
 if(isMobile()) view = "agenda";       // スマホは既定でリスト表示（読みやすさ優先）
 syncViewSeg();
 render();
