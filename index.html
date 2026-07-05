@@ -194,6 +194,39 @@
   .diary-row-snip{font-size:13px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .diary-mark{position:absolute;top:5px;right:5px;font-size:10px;opacity:.85}
 
+  /* top tip banner */
+  .tip-banner{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:11px 15px;border-radius:12px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 13%,transparent),color-mix(in srgb,#9d7bff 11%,transparent));
+    border:1px solid color-mix(in srgb,var(--accent) 26%,transparent)}
+  .tip-banner:empty{display:none}
+  .tb-ico{font-size:16px;flex:0 0 auto}
+  .tb-text{flex:1;font-size:13.5px;font-weight:600;line-height:1.5}
+  .tip-banner .tip-shuffle{flex:0 0 auto}
+
+  /* diary condition row */
+  .diary-lbl{display:block;font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px}
+  .diary-cond{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .cond-weather{display:flex;gap:6px}
+  .wbtn{border:1.5px solid var(--border);background:var(--surface-2);border-radius:10px;padding:7px 9px;font-size:18px;cursor:pointer;line-height:1;transition:.15s}
+  .wbtn:hover{border-color:var(--accent)}
+  .wbtn.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);transform:scale(1.08)}
+  .cond-sleep,.cond-med{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--text-dim)}
+  .cond-sleep input{width:56px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:9px;padding:7px 9px;font-size:14px;font-family:inherit;outline:none;text-align:center}
+  .cond-sleep input:focus{border-color:var(--accent)}
+  .cond-med input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+
+  /* mood chart */
+  .mood-chart{margin:2px 0 4px}
+  .mc-toggle{float:right;display:inline-flex;gap:4px}
+  .mc-t{border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;cursor:pointer}
+  .mc-t.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .mc-bars{display:flex;align-items:flex-end;gap:3px;height:96px;padding:6px 2px;border-bottom:1px solid var(--border)}
+  .mc-col{flex:1;height:100%;display:flex;align-items:flex-end;cursor:pointer;border-radius:4px;transition:background .12s}
+  .mc-col:hover{background:var(--surface-2)}
+  .mc-col.on{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+  .mc-bar{width:100%;border-radius:4px 4px 2px 2px;min-height:6px;transition:height .2s}
+  .diary-row-extra{font-size:13px;flex:0 0 auto;letter-spacing:1px}
+
   /* task tag */
   .tag-task{font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;flex:0 0 auto;
     background:color-mix(in srgb,var(--cat,var(--accent)) 16%,transparent);color:var(--cat,var(--accent));letter-spacing:.4px}
@@ -336,6 +369,8 @@
     <button class="btn icon" id="btnTheme" title="テーマ切替">🌙</button>
     <button class="btn icon" id="btnMenu" title="バックアップ・書き出し">⋯</button>
   </header>
+
+  <div class="tip-banner" id="tipBanner"></div>
 
   <div class="layout">
     <!-- Calendar -->
@@ -492,34 +527,51 @@ const GIST_FILE = "task-calendar-data.json";
 /* ADHDに有効とされる行動戦略（出典: CDC / CHADD / NIMH / 認知行動療法・実装意図研究）
    ※一般的な情報であり医療アドバイスではありません。 */
 const ADHD_TIPS = [
-  {t:"大きな作業は「5分でできる最小の一歩」まで割る。着手の壁が一番の敵。", c:"タスク分割", s:"CDC/CHADD"},
-  {t:"やる気を待たず「2分だけ」始める。動き出すと脳が乗ってくる。", c:"先延ばし対策", s:"CBT/行動療法"},
-  {t:"記憶に頼らず全部書き出す。頭は考える場所、保存は紙やアプリに。", c:"記憶の外部化", s:"CHADD"},
-  {t:"タイマーで25分集中→5分休憩。見えない時間を見える化する。", c:"時間感覚", s:"CBT/行動療法"},
-  {t:"「いつ・どこで・何をするか」を前もって決める（if-thenの実装意図）。", c:"実行意図", s:"実装意図研究"},
-  {t:"難しいことは調子の良い時間帯（例:午前）に置く。", c:"環境調整", s:"CHADD"},
-  {t:"気が散る物を視界から消す。スマホは別の部屋でもいい。", c:"環境調整", s:"CHADD"},
-  {t:"誰かと一緒に作業する（body doubling）。人の存在が集中を助ける。", c:"集中", s:"ADHDコーチング"},
-  {t:"終わったら自分に小さなご褒美。行動の直後の報酬が習慣を作る。", c:"報酬", s:"行動療法"},
-  {t:"完璧より完了。まず60点で出して、後から直す。", c:"先延ばし対策", s:"CBT"},
-  {t:"マルチタスクをやめ、1度に1つ。切り替えは集中を消耗させる。", c:"集中", s:"CDC"},
-  {t:"ToDoは「今日やる3つ」に絞る。多すぎる一覧は麻痺を生む。", c:"優先順位", s:"CHADD"},
-  {t:"「あとでやる」を禁止して「カレンダーの何時にやる」に変換する。", c:"時間管理", s:"CHADD"},
-  {t:"通知をオフにして中断を減らす。1回の中断から戻るのに時間がかかる。", c:"環境調整", s:"CHADD"},
-  {t:"思いついたら即メモ。ワーキングメモリを空けておく。", c:"記憶の外部化", s:"CHADD"},
-  {t:"体を動かすと集中が戻る。落ち着かない時こそ軽い運動を。", c:"身体", s:"CDC"},
-  {t:"睡眠を削らない。寝不足は実行機能（段取り力）を直撃する。", c:"身体", s:"CDC"},
-  {t:"食事を抜かない・規則的に。空腹は衝動性を上げる。", c:"身体", s:"CDC"},
-  {t:"大事な物は「置く場所」を1つに固定。探し物の時間と消耗を減らす。", c:"環境調整", s:"CHADD"},
-  {t:"難所は声に出す/紙に書く。言語化が前頭前野の働きを助ける。", c:"集中", s:"CBT"},
-  {t:"本当の締切の前に「自分締切」を作る。締切効果を前倒しで使う。", c:"時間管理", s:"CHADD"},
-  {t:"退屈な作業は音楽やタイマーで刺激を足し、覚醒を保つ。", c:"集中", s:"行動療法"},
-  {t:"作業開始の儀式を決める（机を1分片づける等）。開始の合図になる。", c:"先延ばし対策", s:"CBT"},
-  {t:"自分を責めない。ADHDは意志の弱さでなく脳の特性。", c:"感情", s:"NIMH"},
-  {t:"週1で振り返り、うまくいった仕組みだけ残す。相性は人それぞれ。", c:"ふりかえり", s:"CHADD"},
-  {t:"助けを求めるのは戦略。ADHDコーチやCBTは有効性が示されている。", c:"サポート", s:"CHADD/CBT"},
+  // w: 時間帯タグ（朝=着手, 日中=集中, 夜=振り返り, 終日=いつでも）
+  {t:"大きな作業は「5分でできる最小の一歩」まで割る。着手の壁が一番の敵。", c:"タスク分割", s:"CDC/CHADD", w:"朝"},
+  {t:"やる気を待たず「2分だけ」始める。動き出すと脳が乗ってくる。", c:"先延ばし対策", s:"CBT/行動療法", w:"朝"},
+  {t:"一番やりたくない事を朝イチに片づける（Eat the frog）。", c:"優先順位", s:"CBT", w:"朝"},
+  {t:"今日やる事は3つだけ選ぶ。多すぎる一覧は麻痺を生む。", c:"優先順位", s:"CHADD", w:"朝"},
+  {t:"作業開始の儀式を決める（机を1分片づける等）。開始の合図になる。", c:"先延ばし対策", s:"CBT", w:"朝"},
+  {t:"難しいことは調子の良い時間帯（多くは午前）に置く。", c:"環境調整", s:"CHADD", w:"朝"},
+  {t:"「いつ・どこで・何をするか」を前もって決める（if-thenの実装意図）。", c:"実行意図", s:"実装意図研究", w:"朝"},
+  {t:"朝に今日の予定をカレンダーの時間に置く（タイムボクシング）。", c:"時間管理", s:"CHADD", w:"朝"},
+  {t:"タイマーで25分集中→5分休憩。見えない時間を見える化する。", c:"時間感覚", s:"CBT/行動療法", w:"日中"},
+  {t:"マルチタスクをやめ、1度に1つ。切り替えは集中を消耗させる。", c:"集中", s:"CDC", w:"日中"},
+  {t:"気が散る物を視界から消す。スマホは別の部屋でもいい。", c:"環境調整", s:"CHADD", w:"日中"},
+  {t:"通知をオフにして中断を減らす。1回の中断から戻るのに時間がかかる。", c:"環境調整", s:"CHADD", w:"日中"},
+  {t:"誰かと一緒に作業する（body doubling）。人の存在が集中を助ける。", c:"集中", s:"ADHDコーチング", w:"日中"},
+  {t:"思いついたら即メモ。ワーキングメモリを空けておく。", c:"記憶の外部化", s:"CHADD", w:"日中"},
+  {t:"難所は声に出す/紙に書く。言語化が前頭前野の働きを助ける。", c:"集中", s:"CBT", w:"日中"},
+  {t:"退屈な作業は音楽やタイマーで刺激を足し、覚醒を保つ。", c:"集中", s:"行動療法", w:"日中"},
+  {t:"体を動かすと集中が戻る。落ち着かない時こそ軽い運動を。", c:"身体", s:"CDC", w:"日中"},
+  {t:"詰まったら5分だけ席を立つ。休憩は集中の一部。", c:"集中", s:"CDC", w:"日中"},
+  {t:"完璧より完了。まず60点で出して、後から直す。", c:"先延ばし対策", s:"CBT", w:"日中"},
+  {t:"「あとでやる」を禁止して「カレンダーの何時にやる」に変換する。", c:"時間管理", s:"CHADD", w:"日中"},
+  {t:"本当の締切の前に「自分締切」を作る。締切効果を前倒しで使う。", c:"時間管理", s:"CHADD", w:"日中"},
+  {t:"作業を可視化（付箋・かんばん）して進捗を目で確認する。", c:"記憶の外部化", s:"CHADD", w:"日中"},
+  {t:"今日できた事を1つ書き出す。小さな達成が次の燃料になる。", c:"ふりかえり", s:"CBT", w:"夜"},
+  {t:"自分を責めない。ADHDは意志の弱さでなく脳の特性。", c:"感情", s:"NIMH", w:"夜"},
+  {t:"寝る前に明日の最初の一歩だけ決めておく。朝の迷いが減る。", c:"実行意図", s:"実装意図研究", w:"夜"},
+  {t:"睡眠を削らない。寝不足は実行機能（段取り力）を直撃する。", c:"身体", s:"CDC", w:"夜"},
+  {t:"寝る前のスマホを減らす。刺激を下げると寝つきが良くなる。", c:"身体", s:"CDC", w:"夜"},
+  {t:"週1で振り返り、うまくいった仕組みだけ残す。相性は人それぞれ。", c:"ふりかえり", s:"CHADD", w:"夜"},
+  {t:"できなかった日も「休めた」と捉える。回復も戦略のうち。", c:"感情", s:"NIMH", w:"夜"},
+  {t:"明日の持ち物・服を前夜に準備。朝の意思決定を減らす。", c:"環境調整", s:"CHADD", w:"夜"},
+  {t:"記憶に頼らず全部書き出す。頭は考える場所、保存は紙やアプリに。", c:"記憶の外部化", s:"CHADD", w:"終日"},
+  {t:"大事な物は「置く場所」を1つに固定。探し物の時間と消耗を減らす。", c:"環境調整", s:"CHADD", w:"終日"},
+  {t:"終わったら自分に小さなご褒美。直後の報酬が習慣を作る。", c:"報酬", s:"行動療法", w:"終日"},
+  {t:"食事を抜かない・規則的に。空腹は衝動性を上げる。", c:"身体", s:"CDC", w:"終日"},
+  {t:"助けを求めるのは戦略。ADHDコーチやCBTは有効性が示されている。", c:"サポート", s:"CHADD/CBT", w:"終日"},
+  {t:"完了の定義を先に決める。「どこまでやれば終わり」を明確に。", c:"タスク分割", s:"CBT", w:"終日"},
+  {t:"「やらない事リスト」も作る。手を広げすぎない。", c:"優先順位", s:"CHADD", w:"終日"},
+  {t:"習慣は既存の行動に紐づける（歯磨きの後に◯◯）。", c:"実行意図", s:"実装意図研究", w:"終日"},
+  {t:"感情が高ぶったら一呼吸おいてから返信・決定する。", c:"感情", s:"CBT", w:"終日"},
+  {t:"うまくいった工夫はこのアプリにメモして再利用する。", c:"ふりかえり", s:"CHADD", w:"終日"},
 ];
-const TIP_SOURCES = "出典: CDC・CHADD・NIMH ／ ※一般情報であり医療アドバイスではありません。困りごとは専門家へ。";
+const TIP_SOURCES = "出典: CDC・CHADD・NIMH ／ ※一般情報であり医療助言ではありません。困りごとは専門家へ。";
+function currentPeriod(){ const h=new Date().getHours(); return h<11?"朝":h<18?"日中":"夜"; }
+function periodLabel(p){ return p==="朝"?"🌅 朝のヒント":p==="夜"?"🌙 夜のヒント":"💡 今日のヒント"; }
 const DEFAULT_CATS = [
   {id:"matsuo", name:"松尾研課題", color:"#f0663c", isTask:true},
   {id:"univ",   name:"大学課題",   color:"#3b82f6", isTask:true},
@@ -544,6 +596,7 @@ let cursor = startOfMonth(new Date());
 let editingId = null;
 let diaryDate = null;                       // 日記ビューで選択中の日付（boot時に今日）
 let tipIndex = 0;                           // 今日のヒントの索引（boot時に日付から決定）
+let moodChartRange = 7;                     // 気分グラフの表示日数（7 or 30）
 
 /* ---------- storage helpers ---------- */
 function load(key, def){ try{ const v=JSON.parse(localStorage.getItem(key)); return v??def; }catch{ return def; } }
@@ -553,14 +606,14 @@ function save(bumpTime=true){
 }
 function saveHidden(){ localStorage.setItem(LS_HIDDEN, JSON.stringify([...hidden])); }
 function localUpdatedAt(){ return localStorage.getItem(LS_UPDATED) || "1970-01-01T00:00:00.000Z"; }
+function diaryEmpty(e){ return !e || (!e.mood && !e.weather && !e.med && !String(e.sleep||"") && !(e.wins||"").trim() && !(e.text||"").trim()); }
 function saveDiary(){
-  // 空の記録は保存しない（掃除）
-  for(const k of Object.keys(diary)){ const e=diary[k]; if(!e || (!e.mood && !(e.wins||"").trim() && !(e.text||"").trim())) delete diary[k]; }
+  for(const k of Object.keys(diary)){ if(diaryEmpty(diary[k])) delete diary[k]; }  // 空の記録は掃除
   localStorage.setItem(LS_DIARY, JSON.stringify(diary));
   localStorage.setItem(LS_UPDATED, new Date().toISOString());
   scheduleAutoPush();
 }
-function ensureDiary(ds){ if(!diary[ds]) diary[ds] = {mood:"", wins:"", text:""}; return diary[ds]; }
+function ensureDiary(ds){ if(!diary[ds]) diary[ds] = {mood:"", weather:"", sleep:"", med:false, wins:"", text:""}; return diary[ds]; }
 function shiftDate(ds, delta){ const d=parseYmd(ds); d.setDate(d.getDate()+delta); return ymd(d); }
 
 /* ---------- date helpers (local, no UTC drift) ---------- */
@@ -772,20 +825,43 @@ function renderUpcoming(){
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 
 /* ---------- ADHD tip card ---------- */
+function tipAt(i){ const n=ADHD_TIPS.length; return ADHD_TIPS[((i%n)+n)%n]; }
+function pickPeriodTip(){
+  const p = currentPeriod();
+  const pool = ADHD_TIPS.map((t,i)=>({t,i})).filter(x=> x.t.w===p || x.t.w==="終日").map(x=>x.i);
+  const list = pool.length ? pool : ADHD_TIPS.map((_,i)=>i);
+  const n = new Date(); const s = new Date(n.getFullYear(),0,0); const day = Math.floor((n-s)/86400000);
+  return list[day % list.length];
+}
+function shuffleTip(){ tipIndex = (tipIndex + 1 + Math.floor(Math.random()*(ADHD_TIPS.length-1))) % ADHD_TIPS.length; renderTip(); }
 function renderTip(){
-  const box = $("tipCard"); if(!box) return;
-  const t = ADHD_TIPS[((tipIndex % ADHD_TIPS.length)+ADHD_TIPS.length)%ADHD_TIPS.length];
-  box.innerHTML =
-    `<div class="tip-head"><span>💡 今日のヒント</span><button class="tip-shuffle" id="tipShuffle" title="別のヒント">🔀</button></div>`+
-    `<div class="tip-body">${escapeHtml(t.t)}</div>`+
-    `<div class="tip-meta"><span class="tip-cat">${escapeHtml(t.c)}</span><span class="tip-src">${escapeHtml(t.s)}</span></div>`+
-    `<div class="tip-disc">${escapeHtml(TIP_SOURCES)}</div>`;
-  $("tipShuffle").onclick = ()=>{ tipIndex = (tipIndex + 1 + Math.floor(Math.random()*(ADHD_TIPS.length-1))) % ADHD_TIPS.length; renderTip(); };
+  const t = tipAt(tipIndex);
+  const label = periodLabel(currentPeriod());
+  const box = $("tipCard");
+  if(box){
+    box.innerHTML =
+      `<div class="tip-head"><span>${label}</span><button class="tip-shuffle" data-shuf title="別のヒント">🔀</button></div>`+
+      `<div class="tip-body">${escapeHtml(t.t)}</div>`+
+      `<div class="tip-meta"><span class="tip-cat">${escapeHtml(t.c)}</span><span class="tip-src">${escapeHtml(t.s)}</span></div>`+
+      `<div class="tip-disc">${escapeHtml(TIP_SOURCES)}</div>`;
+  }
+  const bn = $("tipBanner");
+  if(bn){
+    bn.innerHTML =
+      `<span class="tb-ico">${label.split(" ")[0]}</span>`+
+      `<span class="tb-text">${escapeHtml(t.t)}</span>`+
+      `<button class="tip-shuffle" data-shuf title="別のヒント">🔀</button>`;
+  }
+  document.querySelectorAll("[data-shuf]").forEach(b=> b.onclick = shuffleTip);
 }
 
 /* ---------- diary / journal ---------- */
-const MOODS = [["great","😄","絶好調"],["good","🙂","良い"],["ok","😐","普通"],["low","😞","低め"],["bad","😫","つらい"]];
+const MOODS = [["great","😄","絶好調","#10b981"],["good","🙂","良い","#84cc16"],["ok","😐","普通","#f59e0b"],["low","😞","低め","#f97316"],["bad","😫","つらい","#ef4444"]];
+const WEATHERS = [["sunny","☀️"],["cloudy","⛅"],["overcast","☁️"],["rain","🌧️"],["snow","❄️"]];
 function moodEmoji(k){ const m=MOODS.find(x=>x[0]===k); return m?m[1]:""; }
+function moodColor(k){ const m=MOODS.find(x=>x[0]===k); return m?m[3]:"var(--border)"; }
+function moodScore(k){ const i=MOODS.findIndex(x=>x[0]===k); return i<0?0:(5-i); }  // great5..bad1
+function weatherEmoji(k){ const w=WEATHERS.find(x=>x[0]===k); return w?w[1]:""; }
 function flashSaved(){ const el=$("diarySaved"); if(!el) return; el.textContent="自動保存しました"; el.classList.add("show"); clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>el.classList.remove("show"),1200); }
 function renderDiary(){
   const body = $("calBody");
@@ -793,7 +869,7 @@ function renderDiary(){
   const existing = body.querySelector(".diary");
   // 入力中に外部要因（同期など）で再描画されても、フォーカスを奪わない
   if(existing && existing.dataset.date===ds && existing.contains(document.activeElement)){ refreshDiaryList(); return; }
-  const cur = diary[ds] || {mood:"",wins:"",text:""};
+  const cur = diary[ds] || {mood:"",weather:"",sleep:"",med:false,wins:"",text:""};
   const d = parseYmd(ds);
   body.innerHTML =
     `<div class="diary" data-date="${ds}">
@@ -804,8 +880,16 @@ function renderDiary(){
         <div class="spacer"></div>
         <button class="btn" id="diaryToday">今日</button>
       </div>
+      <label class="diary-lbl">気分</label>
       <div class="diary-moods" id="diaryMoods">
         ${MOODS.map(([k,e,label])=>`<button class="mood ${cur.mood===k?'on':''}" data-mood="${k}" title="${label}">${e}</button>`).join("")}
+      </div>
+      <div class="diary-cond">
+        <div class="cond-weather" id="diaryWeather">
+          ${WEATHERS.map(([k,e])=>`<button class="wbtn ${cur.weather===k?'on':''}" data-weather="${k}" title="天気">${e}</button>`).join("")}
+        </div>
+        <label class="cond-sleep">😴 睡眠 <input type="number" id="diarySleep" min="0" max="24" step="0.5" value="${cur.sleep!=null&&cur.sleep!==''?escapeHtml(String(cur.sleep)):''}" placeholder="—"> h</label>
+        <label class="cond-med"><input type="checkbox" id="diaryMed" ${cur.med?'checked':''}> 💊 服薬</label>
       </div>
       <div class="diary-field">
         <label>できたこと・よかったこと（1つでOK）</label>
@@ -817,6 +901,14 @@ function renderDiary(){
       </div>
       <div class="diary-saved" id="diarySaved"></div>
       <div class="diary-sep"></div>
+      <div class="sec-title">気分の推移
+        <span class="mc-toggle">
+          <button class="mc-t ${moodChartRange===7?'on':''}" data-range="7">7日</button>
+          <button class="mc-t ${moodChartRange===30?'on':''}" data-range="30">30日</button>
+        </span>
+      </div>
+      <div id="moodChart" class="mood-chart"></div>
+      <div class="diary-sep"></div>
       <div class="sec-title">これまでの記録 <span id="diaryCount"></span></div>
       <div id="diaryList"></div>
     </div>`;
@@ -827,14 +919,38 @@ function renderDiary(){
     const e = ensureDiary(ds); e.mood = (e.mood===b.dataset.mood ? "" : b.dataset.mood);
     saveDiary();
     $("diaryMoods").querySelectorAll(".mood").forEach(x=> x.classList.toggle("on", x.dataset.mood===e.mood));
-    flashSaved(); refreshDiaryList();
+    flashSaved(); renderMoodChart(); refreshDiaryList();
   });
+  $("diaryWeather").querySelectorAll("[data-weather]").forEach(b=> b.onclick = ()=>{
+    const e = ensureDiary(ds); e.weather = (e.weather===b.dataset.weather ? "" : b.dataset.weather);
+    saveDiary();
+    $("diaryWeather").querySelectorAll(".wbtn").forEach(x=> x.classList.toggle("on", x.dataset.weather===e.weather));
+    flashSaved();
+  });
+  $("diarySleep").oninput = ()=>{ ensureDiary(ds).sleep = $("diarySleep").value; saveDiary(); flashSaved(); };
+  $("diaryMed").onchange = ()=>{ ensureDiary(ds).med = $("diaryMed").checked; saveDiary(); flashSaved(); };
   const onInput = ()=>{ const e=ensureDiary(ds); e.wins=$("diaryWins").value; e.text=$("diaryText").value; saveDiary(); flashSaved(); };
   $("diaryWins").oninput = onInput;
   $("diaryText").oninput = onInput;
   $("diaryWins").onblur = refreshDiaryList;
   $("diaryText").onblur = refreshDiaryList;
+  $("calBody").querySelectorAll(".mc-t").forEach(b=> b.onclick = ()=>{ moodChartRange = Number(b.dataset.range); $("calBody").querySelectorAll(".mc-t").forEach(x=>x.classList.toggle("on",x===b)); renderMoodChart(); });
+  renderMoodChart();
   refreshDiaryList();
+}
+function renderMoodChart(){
+  const box = $("moodChart"); if(!box) return;
+  const days = moodChartRange; let bars=""; let has=false;
+  for(let i=days-1;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i); const ds=ymd(d);
+    const e=diary[ds]; const sc=e?moodScore(e.mood):0;
+    if(sc) has=true;
+    const h = sc ? Math.round(sc/5*100) : 8;
+    const col = sc ? moodColor(e.mood) : "var(--border)";
+    bars += `<div class="mc-col ${ds===diaryDate?'on':''}" data-d="${ds}" title="${d.getMonth()+1}/${d.getDate()}${sc?' '+moodEmoji(e.mood):''}"><div class="mc-bar" style="height:${h}%;background:${col};opacity:${sc?1:.35}"></div></div>`;
+  }
+  box.innerHTML = has ? `<div class="mc-bars">${bars}</div>` : `<div class="up-empty" style="padding:16px">気分を記録するとここに推移が出ます。</div>`;
+  box.querySelectorAll(".mc-col").forEach(c=> c.onclick = ()=>{ diaryDate = c.dataset.d; renderDiary(); });
 }
 function refreshDiaryList(){
   const box = $("diaryList"); if(!box) return;
@@ -844,10 +960,12 @@ function refreshDiaryList(){
   box.innerHTML = keys.slice(0,120).map(ds=>{
     const e = diary[ds]; const d = parseYmd(ds);
     const snip = (e.wins||e.text||"").replace(/\n/g," ").slice(0,40);
+    const extra = `${e.weather?weatherEmoji(e.weather):""}${e.med?"💊":""}`;
     return `<div class="diary-row ${ds===diaryDate?'on':''}" data-d="${ds}">
       <span class="diary-row-mood">${moodEmoji(e.mood)||"·"}</span>
       <span class="diary-row-date">${d.getMonth()+1}/${d.getDate()}<span class="wd">(${WD[d.getDay()]})</span></span>
       <span class="diary-row-snip">${escapeHtml(snip)}</span>
+      ${extra?`<span class="diary-row-extra">${extra}</span>`:""}
     </div>`;
   }).join("");
   box.querySelectorAll(".diary-row").forEach(r=> r.onclick = ()=>{ diaryDate = r.dataset.d; renderDiary(); });
@@ -1214,7 +1332,7 @@ if("serviceWorker" in navigator){
 /* ---------- boot ---------- */
 applyTheme(localStorage.getItem(LS_THEME) || "light");
 diaryDate = todayStr();
-tipIndex = (function(){ const n=new Date(); const s=new Date(n.getFullYear(),0,0); return Math.floor((n-s)/86400000); })(); // 日替わりヒント
+tipIndex = pickPeriodTip(); // 時間帯（朝/日中/夜）に合わせた日替わりヒント
 if(isMobile()) view = "agenda";       // スマホは既定でリスト表示（読みやすさ優先）
 syncViewSeg();
 render();
