@@ -289,6 +289,17 @@
   .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent); background:var(--surface)}
   .field textarea{resize:vertical; min-height:64px}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  /* recurring task UI */
+  #fRepeatBox .check{font-size:13.5px;font-weight:700}
+  .repeat-opts{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);display:flex;flex-direction:column;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .rf label{display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px}
+  .rf input{width:100%;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:9px;padding:8px 10px;font-size:14px;font-family:inherit;outline:none;text-align:center}
+  .rf input:focus{border-color:var(--accent)}
+  .repeat-preview{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .rp-title{width:100%;font-size:11px;font-weight:800;color:var(--text-dim)}
+  .rp-chip{font-size:11.5px;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:3px 8px;border-radius:16px;white-space:nowrap}
+  .rp-more{font-size:11px;color:var(--text-faint)}
   .catgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:7px}
   .catopt{display:flex;align-items:center;gap:7px;border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text-dim);transition:.15s}
   .catopt .dot{width:11px;height:11px;border-radius:50%}
@@ -421,8 +432,20 @@
         <div class="catgrid" id="fCatGrid"></div>
       </div>
       <div class="row2">
-        <div class="field"><label>日付</label><input type="date" id="fDate"></div>
+        <div class="field"><label id="fDateLbl">日付</label><input type="date" id="fDate"></div>
         <div class="field"><label>時刻（任意）</label><input type="time" id="fTime"></div>
+      </div>
+      <div class="field" id="fRepeatBox">
+        <label class="check"><input type="checkbox" id="fRepeat"> 🔁 毎週くりかえす（提出期限など）</label>
+        <div class="repeat-opts" id="fRepeatOpts" style="display:none">
+          <div class="row3">
+            <div class="rf"><label>回数</label><input type="number" id="fCount" min="1" max="52" value="8"></div>
+            <div class="rf"><label>間隔(週)</label><input type="number" id="fInterval" min="1" max="8" value="1"></div>
+            <div class="rf"><label>開始番号</label><input type="number" id="fStartNum" min="1" value="1"></div>
+          </div>
+          <label class="check mini"><input type="checkbox" id="fAutoNum" checked> タイトルに「第N回」を自動で付ける</label>
+          <div class="repeat-preview" id="fRepeatPreview"></div>
+        </div>
       </div>
       <div class="field">
         <label>メモ（任意）</label>
@@ -497,6 +520,11 @@
           <button class="btn primary" id="addCatBtn">追加</button>
         </div>
       </div>
+
+      <div class="divider"></div>
+
+      <div class="sec-title">クイック追加</div>
+      <button class="btn" id="seedMatsuo">📚 松尾研の講座を一括追加（PhysicalAI・大規模言語モデル 各全8回）</button>
 
       <div class="divider"></div>
 
@@ -986,12 +1014,19 @@ function buildCatGrid(){
     g.appendChild(el);
   });
 }
+function resetRepeat(){
+  $("fRepeat").checked=false; $("fRepeatOpts").style.display="none";
+  $("fCount").value=8; $("fInterval").value=1; $("fStartNum").value=1; $("fAutoNum").checked=true;
+  $("fRepeatPreview").innerHTML="";
+}
 function openAdd(dateStr){
   editingId = null;
   $("mTitle").textContent = "予定を追加";
   $("mDelete").style.display = "none";
   $("fTitle").value = ""; $("fDate").value = dateStr || todayStr();
   $("fTime").value=""; $("fMemo").value=""; $("fDone").checked=false;
+  $("fRepeatBox").style.display=""; resetRepeat();          // 新規のみ繰り返し可
+  $("fDateLbl").textContent = "日付（1回目）";
   selectedCat = (CATS.find(c=>c.isTask)||CATS[0]||{}).id; buildCatGrid();
   showOverlay("overlay"); setTimeout(()=>$("fTitle").focus(),50);
 }
@@ -1002,21 +1037,84 @@ function openEdit(id){
   $("mDelete").style.display = "";
   $("fTitle").value=e.title; $("fDate").value=e.date; $("fTime").value=e.time||"";
   $("fMemo").value=e.memo||""; $("fDone").checked=!!e.done;
+  $("fRepeatBox").style.display="none";                     // 編集時は繰り返しUIを隠す
+  $("fDateLbl").textContent = "日付";
   selectedCat = e.category; buildCatGrid();
   showOverlay("overlay"); setTimeout(()=>$("fTitle").focus(),50);
+}
+function buildSeries(base, count, interval, startNum, auto){
+  const series = "s"+Date.now()+Math.floor(Math.random()*100000);
+  const out = [];
+  for(let i=0;i<count;i++){
+    out.push({ ...base,
+      id: "e"+Date.now()+"_"+i+Math.floor(Math.random()*10000),
+      title: auto ? `${base.title} 第${startNum+i}回` : base.title,
+      date: shiftDate(base.date, i*interval*7),
+      series, seriesIndex: startNum+i });
+  }
+  return out;
+}
+function genSeries(base){
+  const count = Math.max(1, Math.min(52, +$("fCount").value||1));
+  const interval = Math.max(1, +$("fInterval").value||1);
+  const startNum = Math.max(1, +$("fStartNum").value||1);
+  return buildSeries(base, count, interval, startNum, $("fAutoNum").checked);
+}
+function seedMatsuoCourses(){
+  const cat = CATS.some(c=>c.id==="matsuo") ? "matsuo" : (CATS[0]||{id:"other"}).id;
+  const defs = [
+    { title:"PhysicalAI",       first:"2026-07-02", count:8 },  // 第1回7/2 → 第4回7/23, 第5回7/30
+    { title:"大規模言語モデル", first:"2026-07-15", count:8 },  // 第1回7/15 → 第2回7/22
+  ];
+  let added=0; const skipped=[];
+  defs.forEach(d=>{
+    if(events.some(e=> e.title.startsWith(d.title+" 第"))){ skipped.push(d.title); return; }
+    buildSeries({ title:d.title, date:d.first, time:"17:00", category:cat, memo:"", done:false }, d.count, 1, 1, true)
+      .forEach(ev=> events.push(ev));
+    added += d.count;
+  });
+  save(); render();
+  alert((added?`松尾研の講座を追加しました（${added}件・毎週17:00締切）。\n過去回は超過表示になるので、済んだ回はチェックで完了に。`:"追加はありませんでした。")
+    + (skipped.length?`\n既に追加済み: ${skipped.join("、")}`:""));
+}
+function updateRepeatPreview(){
+  const box = $("fRepeatPreview"); if(!box) return;
+  if(!$("fRepeat") || !$("fRepeat").checked){ box.innerHTML=""; return; }
+  const date = $("fDate").value; if(!date){ box.innerHTML='<span class="rp-more">日付を入れると生成予定が表示されます</span>'; return; }
+  const count = Math.max(1, Math.min(52, +$("fCount").value||1));
+  const interval = Math.max(1, +$("fInterval").value||1);
+  const startNum = Math.max(1, +$("fStartNum").value||1);
+  const auto = $("fAutoNum").checked; const t = $("fTime").value;
+  let chips = "";
+  for(let i=0;i<Math.min(count,12);i++){
+    const d = parseYmd(shiftDate(date, i*interval*7));
+    chips += `<span class="rp-chip">${auto?`第${startNum+i}回 `:""}${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})${t?" "+t:""}</span>`;
+  }
+  box.innerHTML = `<div class="rp-title">生成される予定 ${count}件</div>${chips}${count>12?`<span class="rp-more">…他${count-12}件</span>`:""}`;
 }
 function saveEvent(){
   const title = $("fTitle").value.trim();
   const date = $("fDate").value;
   if(!title){ $("fTitle").focus(); $("fTitle").style.borderColor="var(--sun)"; return; }
   if(!date){ $("fDate").focus(); return; }
-  const data = { title, date, time:$("fTime").value, category:selectedCat, memo:$("fMemo").value.trim(), done:$("fDone").checked };
-  if(editingId){ const e=events.find(x=>x.id===editingId); Object.assign(e,data); }
-  else { data.id = "e"+Date.now()+Math.floor(Math.random()*1000); events.push(data); }
+  const base = { title, date, time:$("fTime").value, category:selectedCat, memo:$("fMemo").value.trim(), done:$("fDone").checked };
+  if(editingId){ const e=events.find(x=>x.id===editingId); Object.assign(e,base); }
+  else if($("fRepeat") && $("fRepeat").checked){ genSeries(base).forEach(ev=> events.push(ev)); }
+  else { base.id = "e"+Date.now()+Math.floor(Math.random()*1000); events.push(base); }
   save(); hideOverlay("overlay"); render();
 }
 function deleteEvent(){
   if(!editingId) return;
+  const e = events.find(x=>x.id===editingId);
+  if(e && e.series){
+    const cnt = events.filter(x=>x.series===e.series).length;
+    if(confirm(`これは繰り返しシリーズ（${cnt}件）の一部です。\n「OK」= シリーズ全${cnt}件を削除\n「キャンセル」= この回だけ削除`)){
+      events = events.filter(x=>x.series!==e.series);
+    } else {
+      events = events.filter(x=>x.id!==editingId);
+    }
+    save(); hideOverlay("overlay"); render(); return;
+  }
   if(!confirm("この予定を削除しますか？")) return;
   events = events.filter(x=>x.id!==editingId);
   save(); hideOverlay("overlay"); render();
@@ -1141,7 +1239,11 @@ $("viewSeg").querySelectorAll("button").forEach(b=> b.onclick=()=>{
 $("mClose").onclick = ()=> hideOverlay("overlay");
 $("mSave").onclick = saveEvent;
 $("mDelete").onclick = deleteEvent;
+$("fRepeat").onchange = ()=>{ $("fRepeatOpts").style.display = $("fRepeat").checked ? "" : "none"; updateRepeatPreview(); };
+["fCount","fInterval","fStartNum","fDate","fTime","fTitle"].forEach(id=> $(id).addEventListener("input", updateRepeatPreview));
+$("fAutoNum").addEventListener("change", updateRepeatPreview);
 $("menuClose").onclick = $("menuDone").onclick = ()=> hideOverlay("menuOverlay");
+$("seedMatsuo").onclick = ()=>{ seedMatsuoCourses(); hideOverlay("menuOverlay"); };
 $("expJson").onclick = exportJson;
 $("expIcs").onclick = exportIcs;
 $("impJson").onclick = ()=> $("fileInput").click();
